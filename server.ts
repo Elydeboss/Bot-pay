@@ -23,7 +23,8 @@ import { cleanHandle, notifyTelegram, resolveTelegram, type TgDeps } from "./lib
 import { memoryPluginStore, postgresPluginStore, type PluginStore } from "./lib/plugin-store.ts";
 
 const PORT = Number(process.env.PORT ?? 8787);
-const BASE = (process.env.PUBLIC_URL ?? `http://localhost:${PORT}`).replace(/\/$/, "");
+// PUBLIC_URL can be left unset on Render: RENDER_EXTERNAL_URL is the service's own URL.
+const BASE = (process.env.PUBLIC_URL ?? process.env.RENDER_EXTERNAL_URL ?? `http://localhost:${PORT}`).replace(/\/$/, "");
 const PRICE = process.env.PRICE ?? "$0.01";
 const EVM_NET = process.env.X402_EVM_NETWORK ?? "eip155:8453";
 const SVM_NET = process.env.X402_SVM_NETWORK ?? "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp";

@@ -1,0 +1,72 @@
+# Render Blueprint: provisions the PayBot web service and its Postgres database in one sync.
+# Use it via "New + → Blueprint" in the Render dashboard (repo must be on GitHub/GitLab),
+# or Render's "Deploy to Render" button once this file is on the default branch.
+# Docs: https://render.com/docs/blueprint-spec
+#
+# Values marked `sync: false` are prompted at sync time. Have these ready:
+#   TELEGRAM_BOT_TOKEN       from @BotFather
+#   TELEGRAM_WEBHOOK_SECRET  openssl rand -hex 16
+#   ENCRYPTION_KEY           openssl rand -hex 32 — back it up; losing it means users reconnect
+#   PAJ_API_KEY, PAJ_EMAIL   your PAJ agent credentials
+#   PAJ_SESSION_TOKEN        from local .paj-session.json (npm run login)
+#   PAY_TO_SOL, PAY_TO_EVM   your wallets that receive the $0.01 (leave empty for dev mode)
+
+services:
+  - type: web
+    name: paybot
+    runtime: node
+    plan: starter # swap to "free" to try it out, but it sleeps and misses webhooks
+    region: frankfurt # closest to Nigeria; must match the database region
+    branch: main
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: paybot-db
+          property: internalConnectionString
+      # PUBLIC_URL needs no entry: server.ts falls back to Render's RENDER_EXTERNAL_URL.
+      - key: STATUS_SECRET
+        generateValue: true
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_WEBHOOK_SECRET
+        sync: false
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: PAJ_API_KEY
+        sync: false
+      - key: PAJ_EMAIL
+        sync: false
+      - key: PAJ_SESSION_TOKEN
+        sync: false
+      - key: PAY_TO_SOL
+        sync: false
+      - key: PAY_TO_EVM
+        sync: false
+      # Optional: uncomment to override code defaults.
+      # - key: PRICE
+      #   value: "$0.01"
+      # - key: SOLANA_RPC_URL
+      #   sync: false
+      # - key: PAYBOT_FEE_USDC
+      #   sync: false
+      # - key: PAYBOT_MAX_NGN
+      #   sync: false
+      # - key: PLUGIN_KEY        # turns the PayBox plugin API on (openssl rand -hex 16)
+      #   sync: false
+      # - key: CDP_API_KEY_ID    # Coinbase CDP facilitator instead of the default one
+      #   sync: false
+      # - key: CDP_API_KEY_SECRET
+      #   sync: false
+
+databases:
+  - name: paybot-db
+    databaseName: paybot
+    user: paybot
+    plan: basic-256mb # the free plan expires after 30 days and would drop every user connection
+    region: frankfurt
